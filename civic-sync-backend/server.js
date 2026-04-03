@@ -13,7 +13,11 @@ import fs from 'fs-extra'; // Use fs-extra
 dotenv.config();
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 
 // --- ENV VARIABLE CHECKS ---
 const MONGO_URI = process.env.MONGO_URI;
@@ -204,7 +208,7 @@ app.post('/api/issues', auth, upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ msg: "File is required." });
     if (!category) return res.status(400).json({ msg: "Category is required." });
 
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
     
     const newIssue = new Issue({
       title, category, address,
@@ -447,6 +451,10 @@ app.delete('/api/issues/:id', [auth, adminAuth], async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
 });
 
 // --- START THE SERVER ---
